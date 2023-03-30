@@ -1,8 +1,8 @@
 import paho.mqtt.client as mqtt
-
+import time
 # Set up the MQTT broker and topic
 MQTT_BROKER = "test.mosquitto.org"
-MQTT_TOPIC = "example/topic"
+MQTT_TOPIC = "academics/IoT/data"
 
 # Define a callback function to handle incoming messages
 def on_message(client, userdata, message):
@@ -20,4 +20,9 @@ client.on_message = on_message
 client.subscribe(MQTT_TOPIC)
 
 # Start the MQTT client loop to listen for incoming messages
-client.loop_forever()
+client.loop_start()
+
+while True:
+    time.sleep(1)
+
+print("Done")
