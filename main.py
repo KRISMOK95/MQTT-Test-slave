@@ -60,35 +60,22 @@ time.sleep(3)
 
 #region AAS example
 
-raw_data = aas_types.Property(
+row_data = aas_types.Property(
     value=global_data,
     value_type=aas_types.DataTypeDefXsd.STRING,
     id_short="Raw_data"
 )
 
-raw_data_list = aas_types.SubmodelElementList(
-    type_value_list_element=aas_types.AasSubmodelElements.PROPERTY,
-    value_type_list_element=aas_types.DataTypeDefXsd.STRING,
-    value=global_data,
-    id_short="Raw_data_list"
-)
-
-submodel_raw_data_list = aas_types.Submodel(
-    id="urn:chiller:rawDataList",
-    submodel_elements= [raw_data_list]
-)
-
 submodel_raw_data = aas_types.Submodel(
     id="urn:chiller:rawData",
-    submodel_elements=[raw_data]
+    submodel_elements=[row_data]
 )
-
 #endregion
 
 #region submodel realtime operation data
 
 circulating_fluid_discharge_temperature = aas_types.Property(
-    value=global_data[0],
+    value=global_data[1], #index 0 but in string =1
     value_type=aas_types.DataTypeDefXsd.INT,
     id_short="CFDT"
 )
@@ -106,7 +93,7 @@ electric_resistivity_and_conductivity_circulating_fluid=aas_types.Property(
 )
 
 circulating_fluid_set_temperature = aas_types.Property(
-    value=global_data[5],
+    value=global_data[11],
     value_type=aas_types.DataTypeDefXsd.INT,
     id_short="CFST"
 )
@@ -144,23 +131,13 @@ Chiller = aas_types.AssetAdministrationShell(
                     value="urn:chiller:realtimeOperationData"
                 )
             ]
-        ),
-aas_types.Reference(
-            type=aas_types.ReferenceTypes.MODEL_REFERENCE,
-            keys=[
-                aas_types.Key(
-                    type=aas_types.KeyTypes.SUBMODEL,
-                    value="urn:chiller:rawDataList"
-                )
-            ]
         )
             ]
         )
 
 environment = aas_types.Environment(
     submodels=[submodel_raw_data,
-               submodel_realtime_operation_data,
-               submodel_raw_data_list]
+               submodel_realtime_operation_data]
 )
 
 
