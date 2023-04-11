@@ -4,6 +4,8 @@ import threading
 import aas_core3_rc02.types as aas_types
 import aas_core3_rc02.jsonization as aas_jsonization
 import json
+import ast
+
 # Set up the MQTT broker and topic
 MQTT_BROKER = "test.mosquitto.org"
 MQTT_TOPIC = "example/topic"
@@ -15,7 +17,6 @@ data_lock = threading.Lock()
 
 def update_data():
     global global_data
-    global_data=[]
     while True:
         update_event.wait()
 
@@ -29,30 +30,27 @@ update_thread.daemon = True
 update_thread.start()
 
 
-# Define a callback function to handle incoming messages
 def on_message(client, userdata, message):
     global global_data
     print("Message received via MQTT:")
     row_data = message.payload.decode('utf-8')
     print(f"Row data: {row_data}")
+    print(f"Row data type: {type(row_data)}")
 
-    # Split the row data into individual elements
-    data_list = row_data.strip().split(',')
+    try:
+        # Convert the row_data from string to list
+        data_list = ast.literal_eval(row_data)
 
-    # Convert each element to an integer and append to the global_data list
-    for s in data_list:
-        try:
-            global_data.append(int(s))
-        except ValueError:
-            print(f"Skipping invalid data value: {s}")
+        with data_lock:
+            global_data = data_list
+            print(f"Global data before update: {global_data}")
 
-    with data_lock:
-        print(f"Global data before update: {global_data}")
-        # Keep only the last 12 elements in global_data
-        global_data = global_data[-12:]
-        print(f"Global data after update: {global_data}")
+        update_event.set()
 
-    update_event.set()
+    except (ValueError, SyntaxError):
+        print("Received message is not a valid list.")
+
+
 
 
 # Set up the MQTT client and connect to the broker
@@ -160,7 +158,6 @@ print(json.dumps(jsonable,indent=3))
 
 
 while True:
-    print(f"Global Data: {global_data}")
     jsonable = aas_jsonization.to_jsonable(environment)
     print(json.dumps(jsonable, indent=3))
     time.sleep(5)
