@@ -5,6 +5,10 @@ import aas_core3_rc02.types as aas_types
 import aas_core3_rc02.jsonization as aas_jsonization
 import json
 import ast
+import logging
+
+logging.basicConfig(filename="mqtt_log.txt", level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 # Set up the MQTT broker and topic
 MQTT_BROKER = "test.mosquitto.org"
@@ -40,6 +44,7 @@ def on_message(client, userdata, message):
 
 def update_data():
     global global_data
+    logger.debug("Entering update_data() function")
     while True:
         update_event.wait()
 
