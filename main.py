@@ -5,10 +5,14 @@ import aas_core3_rc02.types as aas_types
 import aas_core3_rc02.jsonization as aas_jsonization
 import json
 import ast
-import logging
 import logging.handlers
+from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
+from pydantic import BaseModel
+import uvicorn
 
 
+#region logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
@@ -22,23 +26,46 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-# Set up the MQTT broker and topic
+#endregion
+
+#region Set up the MQTT broker and topic
 MQTT_BROKER = "test.mosquitto.org"
 MQTT_TOPIC = "example/topic"
 
 global_data = None
-
+last_log_time = 0
 update_event = threading.Event()
 data_lock = threading.Lock()
+#endregion
+
+#region FastAPI
+
+global_jsonable = None
+app = FastAPI()
+
+class EnvironmentData(BaseModel):
+    submodels: list
+
+@app.get("/data", response_model=EnvironmentData)
+def get_data():
+    global data_lock, global_jsonable
+    with data_lock:
+        if global_jsonable is not None:
+            return JSONResponse(content=global_jsonable)
+        else:
+            raise HTTPException(status_code=404, detail="Data not available")
+
+#endregion
 
 
+#region on_message()
 def on_message(client, userdata, message):
     global global_data
+    global last_log_time
     print("Message received via MQTT:")
     row_data = message.payload.decode('utf-8')
     print(f"Row data: {row_data}")
     print(f"Row data type: {type(row_data)}")
-    logger.debug(f"Row data: {row_data}")
 
 
     try:
@@ -48,23 +75,27 @@ def on_message(client, userdata, message):
         with data_lock:
             global_data = data_list
             print(f"Global data before update: {global_data}")
+        if time.time() - last_log_time >= 30:
+            logger.debug(f"Row data: {row_data}")
+            last_log_time = time.time()
 
         update_event.set()
 
     except (ValueError, SyntaxError):
         print("Received message is not a valid list.")
 
-
+#endregion
 
 def update_data():
-    global global_data
+    global global_data, global_jsonable
+
     logger.debug("Entering update_data() function")
+
     while True:
         update_event.wait()
 
         with data_lock:
             # region AAS example
-
             row_data = aas_types.Property(
                 value=global_data,
                 value_type=aas_types.DataTypeDefXsd.STRING,
@@ -145,12 +176,17 @@ def update_data():
                            submodel_realtime_operation_data]
             )
 
-        jsonable = aas_jsonization.to_jsonable(environment)
+            jsonable = aas_jsonization.to_jsonable(environment)
+            global_jsonable = jsonable
+        print(jsonable)
         print(json.dumps(jsonable, indent=3))
 
         time.sleep(4)
 
         update_event.clear()
+
+
+
 
 
 update_thread = threading.Thread(target=update_data)
@@ -172,7 +208,8 @@ client.loop_start()
 
 time.sleep(3)
 
-
+if __name__ == "__main__":
+    uvicorn.run(app, host="0.0.0.0", port=8000)
 
 
 while True:
