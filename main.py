@@ -15,6 +15,7 @@ data_lock = threading.Lock()
 
 def update_data():
     global global_data
+    global_data=[]
     while True:
         update_event.wait()
 
@@ -34,10 +35,22 @@ def on_message(client, userdata, message):
     print("Message received via MQTT:")
     row_data = message.payload.decode('utf-8')
     print(f"Row data: {row_data}")
-    global_data = row_data
+
+    # Split the row data into individual elements
+    data_list = row_data.strip().split(',')
+
+    # Convert each element to an integer and append to the global_data list
+    for s in data_list:
+        try:
+            global_data.append(int(s))
+        except ValueError:
+            print(f"Skipping invalid data value: {s}")
 
     with data_lock:
-        global_data = row_data
+        print(f"Global data before update: {global_data}")
+        # Keep only the last 12 elements in global_data
+        global_data = global_data[-12:]
+        print(f"Global data after update: {global_data}")
 
     update_event.set()
 
@@ -75,7 +88,7 @@ submodel_raw_data = aas_types.Submodel(
 #region submodel realtime operation data
 
 circulating_fluid_discharge_temperature = aas_types.Property(
-    value=global_data[1], #index 0 but in string =1
+    value=global_data[0],
     value_type=aas_types.DataTypeDefXsd.INT,
     id_short="CFDT"
 )
