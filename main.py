@@ -6,9 +6,21 @@ import aas_core3_rc02.jsonization as aas_jsonization
 import json
 import ast
 import logging
+import logging.handlers
 
-logging.basicConfig(filename="mqtt_log.txt", level=logging.DEBUG)
+
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+# create a file handler
+log_file = 'mqtt_log.txt'
+max_log_size = 1024 * 1024 * 10  # 10 MB
+backup_count = 1
+handler = logging.handlers.RotatingFileHandler(log_file, maxBytes=max_log_size, backupCount=backup_count)
+handler.setLevel(logging.DEBUG)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
 
 # Set up the MQTT broker and topic
 MQTT_BROKER = "test.mosquitto.org"
@@ -26,6 +38,8 @@ def on_message(client, userdata, message):
     row_data = message.payload.decode('utf-8')
     print(f"Row data: {row_data}")
     print(f"Row data type: {type(row_data)}")
+    logger.debug(f"Row data: {row_data}")
+
 
     try:
         # Convert the row_data from string to list
@@ -162,8 +176,8 @@ time.sleep(3)
 
 
 while True:
-
-    time.sleep(5)
+    logger.debug('Logging every 30 seconds')
+    time.sleep(30)
 
 
 
