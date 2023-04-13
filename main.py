@@ -92,6 +92,7 @@ def update_data():
     logger.debug("Entering update_data() function")
 
     while True:
+
         update_event.wait()
 
         with data_lock:
@@ -113,7 +114,16 @@ def update_data():
             circulating_fluid_discharge_temperature = aas_types.Property(
                 value=global_data[0],
                 value_type=aas_types.DataTypeDefXsd.INT,
-                id_short="CFDT"
+                id_short="CFDT",
+                semantic_id=aas_types.Reference(
+                    type=aas_types.ReferenceTypes.MODEL_REFERENCE,
+                    keys=[
+                        aas_types.Key(
+                            type=aas_types.KeyTypes.CONCEPT_DESCRIPTION,
+                            value="urn:zhaw:conceptDescription:circulating_fluid_discharge_temperature"
+                        )
+                    ]
+                )
             )
 
             circulating_fluid_discharge_pressure = aas_types.Property(
@@ -173,7 +183,47 @@ def update_data():
 
             environment = aas_types.Environment(
                 submodels=[submodel_raw_data,
-                           submodel_realtime_operation_data]
+                           submodel_realtime_operation_data
+                           ],
+                concept_descriptions=[
+                    aas_types.ConceptDescription(
+                        id="urn:zhaw:conceptDescription:circulating_fluid_discharge_temperature",
+                        embedded_data_specifications=[
+                            aas_types.EmbeddedDataSpecification(
+                                data_specification=aas_types.Reference(
+                                    type=aas_types.ReferenceTypes.GLOBAL_REFERENCE,
+                                    keys=[
+                                        aas_types.Key(
+                                            type=aas_types.KeyTypes.GLOBAL_REFERENCE,
+                                            value="0112/2///61360_4#AAA621"
+                                        )
+                                    ]
+                                ),
+                                data_specification_content=aas_types.DataSpecificationIEC61360(
+                                    preferred_name=[
+                                        aas_types.LangString(
+                                            language="en",
+                                            text="temperature"
+                                        )
+                                    ],
+                                    short_name=[
+                                        aas_types.LangString(
+                                            language="en",
+                                            text=""
+                                        )
+                                    ],
+                                    definition=[
+                                        aas_types.LangString(
+                                            language="en",
+                                            text="Circulating fluid discharge temperature is the temperature of the fluid leaving the system for circulation"
+                                        )
+                                    ],
+                                    unit="°C"
+                                )
+                            )
+                        ]
+                    )
+                ]
             )
 
             jsonable = aas_jsonization.to_jsonable(environment)
