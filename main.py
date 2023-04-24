@@ -327,20 +327,20 @@ def on_message(client, userdata, message):
     global global_data
     global last_log_time
     print("Message received via MQTT:")
-    row_data = message.payload.decode('utf-8')
-    print(f"Row data: {row_data}")
-    print(f"Row data type: {type(row_data)}")
+    raw_data = message.payload.decode('utf-8')
+    print(f"Row data: {raw_data}")
+    print(f"Row data type: {type(raw_data)}")
 
 
     try:
         # Convert the row_data from string to list
-        data_list = ast.literal_eval(row_data)
+        data_list = ast.literal_eval(raw_data)
 
         with data_lock:
             global_data = data_list
             print(f"Global data before update: {global_data}")
         if time.time() - last_log_time >= 30:
-            logger.debug(f"Row data: {row_data}")
+            logger.debug(f"Row data: {raw_data}")
             last_log_time = time.time()
 
         update_event.set()
