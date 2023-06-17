@@ -13,11 +13,11 @@ import uvicorn
 import requests
 
 
-#region logging
+#region Logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
-# create a file handler
+# Create a file handler
 log_file = 'mqtt_log.txt'
 max_log_size = 1024 * 1024 * 10  # 10 MB
 backup_count = 1
@@ -26,7 +26,6 @@ handler.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
-
 #endregion
 
 #region Set up the MQTT broker and topic
@@ -41,7 +40,6 @@ data_lock = threading.Lock()
 #endregion
 
 #region FastAPI
-
 global_jsonable = None
 app = FastAPI()
 
@@ -57,21 +55,19 @@ def get_data():
         else:
             raise HTTPException(status_code=404, detail="Data not available")
 
-
 class StandardData(BaseModel):
     submodels: list
+
 @app.get("/standardData", response_model=StandardData)
-def get_data():
+def get_standard_data():
     global global_data_pre
     if global_data_pre is not None:
         return JSONResponse(content=global_data_pre)
     else:
         raise HTTPException(status_code=404, detail="Data not available")
-
 #endregion
 
-#region set initial values
-
+#region Set initial values
 def set_initial_values():
     global global_data_pre
 
@@ -138,7 +134,7 @@ def set_initial_values():
                 value="30-70",
                 id_short="humidity_range_percent",
                 value_type=aas_types.DataTypeDefXsd.STRING
-            ),  # AAS.TYPES.Range should replace this property
+            ),
             aas_types.Property(
                 value="3000",
                 id_short="altitude_m",
@@ -148,7 +144,7 @@ def set_initial_values():
                 value="R410A (HFC)",
                 id_short="refrigerant",
                 value_type=aas_types.DataTypeDefXsd.STRING
-            ),  # Could link to another URL or website (aas_types.DataTypeDefXsd.AnyURI)
+            ),
             aas_types.Property(
                 value="0.65",
                 id_short="refrigerant_charge_kg",
@@ -184,12 +180,12 @@ def set_initial_values():
                 value="4700/5100",
                 id_short="cooling_capacity_50Hz_60Hz_watt",
                 value_type=aas_types.DataTypeDefXsd.STRING
-            ),  # Separate 50 / 60 Hz and convert string -> int
+            ),
             aas_types.Property(
                 value="1100/1400",
                 id_short="heating_capacity_50Hz_60Hz_watt",
                 value_type=aas_types.DataTypeDefXsd.STRING
-            ),  # The unit can be outside (remind Markco)
+            ),
             aas_types.Property(
                 value="0.1",
                 id_short="temperature_stability",
@@ -308,18 +304,15 @@ def set_initial_values():
 
     environment = aas_types.Environment(
         submodels=[
-                   submodel_chiller_identification,
-                   submodel_chiller_standard_technical_data,
-                   submodel_chiller_standard_circulating_fluid_system_data,
-                   submodel_chiller_standard_electrical_system_data
-                   ]
+            submodel_chiller_identification,
+            submodel_chiller_standard_technical_data,
+            submodel_chiller_standard_circulating_fluid_system_data,
+            submodel_chiller_standard_electrical_system_data
+        ]
     )
 
     jsonable_pre = aas_jsonization.to_jsonable(environment)
-
     global_data_pre = jsonable_pre
-
-
 #endregion
 
 #region on_message()
@@ -328,26 +321,24 @@ def on_message(client, userdata, message):
     global last_log_time
     print("Message received via MQTT:")
     raw_data = message.payload.decode('utf-8')
-    print(f"Row data: {raw_data}")
-    print(f"Row data type: {type(raw_data)}")
-
+    print(f"Raw data: {raw_data}")
+    print(f"Raw data type: {type(raw_data)}")
 
     try:
-        # Convert the row_data from string to list
+        # Convert the raw_data from string to list
         data_list = ast.literal_eval(raw_data)
 
         with data_lock:
             global_data = data_list
             print(f"Global data before update: {global_data}")
         if time.time() - last_log_time >= 30:
-            logger.debug(f"Row data: {raw_data}")
+            logger.debug(f"Raw data: {raw_data}")
             last_log_time = time.time()
 
         update_event.set()
 
     except (ValueError, SyntaxError):
         print("Received message is not a valid list.")
-
 #endregion
 
 def update_data():
@@ -358,11 +349,10 @@ def update_data():
     set_initial_values()
 
     while True:
-
         update_event.wait()
 
         with data_lock:
-            # region AAS example
+            # Update submodel_raw_data
             row_data = aas_types.Property(
                 value=global_data,
                 value_type=aas_types.DataTypeDefXsd.STRING,
@@ -373,10 +363,8 @@ def update_data():
                 id="urn:chiller:rawData",
                 submodel_elements=[row_data]
             )
-            # endregion
 
-            # region submodel realtime operation data
-
+            # Update submodel_realtime_operation_data
             circulating_fluid_discharge_temperature = aas_types.Property(
                 value=global_data[0],
                 value_type=aas_types.DataTypeDefXsd.INT,
@@ -412,45 +400,20 @@ def update_data():
 
             submodel_realtime_operation_data = aas_types.Submodel(
                 id="urn:chiller:realtimeOperationData",
-                submodel_elements=[circulating_fluid_discharge_temperature,
-                                   circulating_fluid_discharge_pressure,
-                                   electric_resistivity_and_conductivity_circulating_fluid,
-                                   circulating_fluid_set_temperature]
-            )
-
-            asset_information = aas_types.AssetInformation(
-                asset_kind=aas_types.AssetKind.TYPE
-            )
-
-            Chiller = aas_types.AssetAdministrationShell(
-                id="urn:chiller",
-                asset_information=asset_information,
-                submodels=[
-                    aas_types.Reference(
-                        type=aas_types.ReferenceTypes.MODEL_REFERENCE,
-                        keys=[
-                            aas_types.Key(
-                                type=aas_types.KeyTypes.SUBMODEL,
-                                value="urn:chiller:rawData"
-                            )
-                        ]
-                    ),
-                    aas_types.Reference(
-                        type=aas_types.ReferenceTypes.MODEL_REFERENCE,
-                        keys=[
-                            aas_types.Key(
-                                type=aas_types.KeyTypes.SUBMODEL,
-                                value="urn:chiller:realtimeOperationData"
-                            )
-                        ]
-                    )
+                submodel_elements=[
+                    circulating_fluid_discharge_temperature,
+                    circulating_fluid_discharge_pressure,
+                    electric_resistivity_and_conductivity_circulating_fluid,
+                    circulating_fluid_set_temperature
                 ]
             )
 
+            # Update environment
             environment = aas_types.Environment(
-                submodels=[submodel_raw_data,
-                           submodel_realtime_operation_data
-                           ],
+                submodels=[
+                    submodel_raw_data,
+                    submodel_realtime_operation_data
+                ],
                 concept_descriptions=[
                     aas_types.ConceptDescription(
                         id="urn:zhaw:conceptDescription:circulating_fluid_discharge_temperature",
@@ -494,15 +457,13 @@ def update_data():
 
             jsonable = aas_jsonization.to_jsonable(environment)
             global_jsonable = jsonable
+
         print(jsonable)
         print(json.dumps(jsonable, indent=3))
 
         time.sleep(4)
 
         update_event.clear()
-
-
-
 
 
 update_thread = threading.Thread(target=update_data)
@@ -522,17 +483,5 @@ client.subscribe(MQTT_TOPIC)
 # Start the MQTT client loop to listen for incoming messages
 client.loop_start()
 
-time.sleep(3)
-
 if __name__ == "__main__":
-
-    uvicorn.run(app, host="0.0.0.0", port=8000)
-
-
-while True:
-    logger.debug('Logging every 30 seconds')
-    time.sleep(30)
-
-
-
-print("Done")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000)

@@ -5905,3 +5905,24 @@
 2023-06-17 11:39:58,787 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
 2023-06-17 11:40:10,379 - main - DEBUG - Logging every 30 seconds
 2023-06-17 11:40:29,455 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:47:35,200 - __main__ - DEBUG - Entering update_data() function
+2023-06-17 11:47:35,682 - __main__ - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:47:44,711 - __main__ - DEBUG - Logging every 30 seconds
+2023-06-17 11:47:53,865 - main - DEBUG - Entering update_data() function
+2023-06-17 11:47:55,023 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:47:56,895 - main - DEBUG - Logging every 30 seconds
+2023-06-17 11:49:06,196 - main - DEBUG - Entering update_data() function
+2023-06-17 11:49:07,512 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:49:09,227 - main - DEBUG - Logging every 30 seconds
+2023-06-17 11:49:38,553 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:49:39,238 - main - DEBUG - Logging every 30 seconds
+2023-06-17 11:50:08,912 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:50:09,245 - main - DEBUG - Logging every 30 seconds
+2023-06-17 11:50:39,247 - main - DEBUG - Logging every 30 seconds
+2023-06-17 11:50:39,631 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:51:09,257 - main - DEBUG - Logging every 30 seconds
+2023-06-17 11:51:09,637 - main - DEBUG - Row data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:52:00,132 - main - DEBUG - Entering update_data() function
+2023-06-17 11:52:00,215 - main - DEBUG - Raw data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:52:30,776 - main - DEBUG - Raw data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
+2023-06-17 11:53:01,661 - main - DEBUG - Raw data: [214, 0, 0, 0, 32, 25, 20, 21, 0, 0, 0, 230, 0]
