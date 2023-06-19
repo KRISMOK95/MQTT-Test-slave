@@ -55,6 +55,15 @@ def get_data():
         else:
             raise HTTPException(status_code=404, detail="Data not available")
 
+@app.get("/alarmflag1", response_model=EnvironmentData)
+def get_data():
+    global data_lock, global_data
+    with data_lock:
+        if global_jsonable is not None:
+            return JSONResponse(content=global_data[5])
+        else:
+            raise HTTPException(status_code=404, detail="Data not available")
+
 class StandardData(BaseModel):
     submodels: list
 
@@ -457,6 +466,7 @@ def update_data():
 
             jsonable = aas_jsonization.to_jsonable(environment)
             global_jsonable = jsonable
+
 
         print(jsonable)
         print(json.dumps(jsonable, indent=3))
